@@ -82,6 +82,21 @@ static void test_parse_number() {
     TEST_NUMBER(-1.7976931348623157e+308, "-1.7976931348623157e+308");
 }
 
+#define TEST_STRING(expect,actual) \
+    do{\
+        lept_value v;\
+        lept_inti(&v);\
+        EXPECT_EQ_INT(LEPT_PARSE_OK,lept_parse(&v,json));\
+        EXPECT_EQ_INT(LEPT_STRINT,lept_get_type(&v));\
+        EXPECT_EQ_STRING(expect,lept_get_string(&v),lept_get_string_length(&v));\
+        lept_free(&v);\
+    } while(0)
+
+static void test_parse_string() {
+    TEST_STRING("","\"\"");
+    TEST_STRING("Hello","\"Hello\"");
+}
+
 #define TEST_ERROR(error, json)\
     do {\
         lept_value v;\
@@ -129,6 +144,7 @@ static void test_parse() {
     test_parse_true();
     test_parse_false();
     test_parse_number();
+    test_parse_string();
     test_parse_expect_value();
     test_parse_invalid_value();
     test_parse_root_not_singular();
