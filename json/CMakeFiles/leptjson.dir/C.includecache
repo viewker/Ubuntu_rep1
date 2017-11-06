@@ -1,4 +1,4 @@
-#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
 
 #IncludeRegexScan: ^.*$
 
@@ -10,6 +10,10 @@
 leptjson.h
 /home/cheng/code/json/leptjson.h
 assert.h
+-
+errno.h
+-
+math.h
 -
 stdlib.h
 -
