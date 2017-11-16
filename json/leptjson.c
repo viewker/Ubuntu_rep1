@@ -8,8 +8,14 @@
 #define ISDIGIT(ch)         ((ch) >= '0' && (ch) <= '9')
 #define ISDIGIT1TO9(ch)     ((ch) >= '1' && (ch) <= '9')
 
+#ifndef LEPT_PARSE_STACK_INIT_SIZE
+#define LEPT_PARSE_STACK_INTI_SIZE 256
+#endif
+
 typedef struct {
     const char* json;
+    char* stack;
+    size_t size, top;
 }lept_context;
 
 static void lept_parse_whitespace(lept_context* c) {
@@ -50,8 +56,8 @@ static int lept_parse_number(lept_context* c, lept_value* v) {
         for (p++; ISDIGIT(*p); p++);
     }
     errno = 0;
-    v->n = strtod(c->json, NULL);
-    if (errno == ERANGE && (v->n == HUGE_VAL || v->n == -HUGE_VAL))
+    v->u.n = strtod(c->json, NULL);
+    if (errno == ERANGE && (v->u.n == HUGE_VAL || v->u.n == -HUGE_VAL))
         return LEPT_PARSE_NUMBER_TOO_BIG;
     v->type = LEPT_NUMBER;
     c->json = p;
@@ -73,7 +79,9 @@ int lept_parse(lept_value* v, const char* json) {
     int ret;
     assert(v != NULL);
     c.json = json;
-    v->type = LEPT_NULL;
+    c.stack = NULL;
+    c.size = c.top = 0;
+    lept_init(v);
     lept_parse_whitespace(&c);
     if ((ret = lept_parse_value(&c, v)) == LEPT_PARSE_OK) {
         lept_parse_whitespace(&c);
@@ -82,13 +90,15 @@ int lept_parse(lept_value* v, const char* json) {
             ret = LEPT_PARSE_ROOT_NOT_SINGULAR;
         }
     }
+    assert(c.top == 0);
+    free(c.stack);
     return ret;
 }
 
 void lept_free(lept_value* v) {
     assert(v != NULL);
     if(v->type == LEPT_STRING) 
-        free(v->u.s.s)
+        free(v->u.s.s);
     v->type = LEPT_NULL;
 }
 
@@ -99,5 +109,15 @@ lept_type lept_get_type(const lept_value* v) {
 
 double lept_get_number(const lept_value* v) {
     assert(v != NULL && v->type == LEPT_NUMBER);
-    return v->n;
+    return v->u.n;
+}
+
+void lept_set_string(lept_value* v, const char* s, size_t len) {
+    assert(v != NULL && (s != NULL || len == 0));
+    lept_free(v);
+    v->u.s.s = (char*)malloc(len+1);
+    memcpy(v->u.s.s, s, len);
+    v->u.s.s[len] = '\0';
+    v->u.s.len = len;
+    v->type = LEPT_STRING;
 }
